@@ -1,9 +1,15 @@
 /* eslint-disable react/no-unknown-property */
-import { forwardRef, useImperativeHandle, useEffect, useRef, useMemo } from 'react';
-import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera } from '@react-three/drei';
-import { degToRad } from 'three/src/math/MathUtils.js';
+import {
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
+import * as THREE from "three";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { PerspectiveCamera } from "@react-three/drei";
+const { degToRad } = THREE.MathUtils;
 
 interface BeamsProps {
   beamWidth?: number;
@@ -16,22 +22,31 @@ interface BeamsProps {
   rotation?: number;
 }
 
-function extendMaterial(BaseMaterial: typeof THREE.MeshStandardMaterial, cfg: any) {
+function extendMaterial(
+  BaseMaterial: typeof THREE.MeshStandardMaterial,
+  cfg: any,
+) {
   const physical = THREE.ShaderLib.physical;
-  const { vertexShader: baseVert, fragmentShader: baseFrag, uniforms: baseUniforms } = physical;
+  const {
+    vertexShader: baseVert,
+    fragmentShader: baseFrag,
+    uniforms: baseUniforms,
+  } = physical;
   const baseDefines = (physical as any).defines ?? {};
   const uniforms = THREE.UniformsUtils.clone(baseUniforms);
   const defaults = new BaseMaterial(cfg.material || {}) as any;
   if (defaults.color) uniforms.diffuse.value = defaults.color;
-  if ('roughness' in defaults) uniforms.roughness.value = defaults.roughness;
-  if ('metalness' in defaults) uniforms.metalness.value = defaults.metalness;
-  if ('envMap' in defaults) uniforms.envMap.value = defaults.envMap;
-  if ('envMapIntensity' in defaults) uniforms.envMapIntensity.value = defaults.envMapIntensity;
+  if ("roughness" in defaults) uniforms.roughness.value = defaults.roughness;
+  if ("metalness" in defaults) uniforms.metalness.value = defaults.metalness;
+  if ("envMap" in defaults) uniforms.envMap.value = defaults.envMap;
+  if ("envMapIntensity" in defaults)
+    uniforms.envMapIntensity.value = defaults.envMapIntensity;
   Object.entries(cfg.uniforms ?? {}).forEach(([key, u]: [string, any]) => {
-    uniforms[key] = u !== null && typeof u === 'object' && 'value' in u ? u : { value: u };
+    uniforms[key] =
+      u !== null && typeof u === "object" && "value" in u ? u : { value: u };
   });
-  let vert = `${cfg.header}\n${cfg.vertexHeader ?? ''}\n${baseVert}`;
-  let frag = `${cfg.header}\n${cfg.fragmentHeader ?? ''}\n${baseFrag}`;
+  let vert = `${cfg.header}\n${cfg.vertexHeader ?? ""}\n${baseVert}`;
+  let frag = `${cfg.header}\n${cfg.fragmentHeader ?? ""}\n${baseFrag}`;
   for (const [inc, code] of Object.entries(cfg.vertex ?? {})) {
     vert = vert.replace(inc, `${inc}\n${code}`);
   }
@@ -49,7 +64,7 @@ function extendMaterial(BaseMaterial: typeof THREE.MeshStandardMaterial, cfg: an
 }
 
 const hexToNormalizedRGB = (hex: string): [number, number, number] => {
-  const clean = hex.replace('#', '');
+  const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
@@ -112,14 +127,22 @@ float cnoise(vec3 P){
 }
 `;
 
-function createStackedPlanesBufferGeometry(n: number, width: number, height: number, spacing: number, heightSegments: number) {
+function createStackedPlanesBufferGeometry(
+  n: number,
+  width: number,
+  height: number,
+  spacing: number,
+  heightSegments: number,
+) {
   const geometry = new THREE.BufferGeometry();
   const numVertices = n * (heightSegments + 1) * 2;
   const numFaces = n * heightSegments * 2;
   const positions = new Float32Array(numVertices * 3);
   const indices = new Uint32Array(numFaces * 3);
   const uvs = new Float32Array(numVertices * 2);
-  let vertexOffset = 0, indexOffset = 0, uvOffset = 0;
+  let vertexOffset = 0,
+    indexOffset = 0,
+    uvOffset = 0;
   const totalWidth = n * width + (n - 1) * spacing;
   const xOffsetBase = -totalWidth / 2;
   for (let i = 0; i < n; i++) {
@@ -130,9 +153,15 @@ function createStackedPlanesBufferGeometry(n: number, width: number, height: num
       const y = height * (j / heightSegments - 0.5);
       positions.set([xOffset, y, 0, xOffset + width, y, 0], vertexOffset * 3);
       const uvY = j / heightSegments;
-      uvs.set([uvXOffset, uvY + uvYOffset, uvXOffset + 1, uvY + uvYOffset], uvOffset);
+      uvs.set(
+        [uvXOffset, uvY + uvYOffset, uvXOffset + 1, uvY + uvYOffset],
+        uvOffset,
+      );
       if (j < heightSegments) {
-        const a = vertexOffset, b = vertexOffset + 1, c = vertexOffset + 2, d = vertexOffset + 3;
+        const a = vertexOffset,
+          b = vertexOffset + 1,
+          c = vertexOffset + 2,
+          d = vertexOffset + 3;
         indices.set([a, b, c, c, b, d], indexOffset);
         indexOffset += 6;
       }
@@ -140,46 +169,75 @@ function createStackedPlanesBufferGeometry(n: number, width: number, height: num
       uvOffset += 4;
     }
   }
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
   geometry.setIndex(new THREE.BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
   return geometry;
 }
 
-const MergedPlanes = forwardRef<any, any>(({ material, width, count, height }, ref) => {
-  const mesh = useRef<any>(null);
-  useImperativeHandle(ref, () => mesh.current);
-  const geometry = useMemo(() => createStackedPlanesBufferGeometry(count, width, height, 0, 100), [count, width, height]);
-  useFrame((_, delta) => {
-    if (mesh.current) mesh.current.material.uniforms.time.value += 0.1 * delta;
-  });
-  return <mesh ref={mesh} geometry={geometry} material={material} />;
-});
-MergedPlanes.displayName = 'MergedPlanes';
+const MergedPlanes = forwardRef<any, any>(
+  ({ material, width, count, height }, ref) => {
+    const mesh = useRef<any>(null);
+    useImperativeHandle(ref, () => mesh.current);
+    const geometry = useMemo(
+      () => createStackedPlanesBufferGeometry(count, width, height, 0, 100),
+      [count, width, height],
+    );
+    useFrame((_, delta) => {
+      if (mesh.current)
+        mesh.current.material.uniforms.time.value += 0.1 * delta;
+    });
+    return <mesh ref={mesh} geometry={geometry} material={material} />;
+  },
+);
+MergedPlanes.displayName = "MergedPlanes";
 
 const PlaneNoise = forwardRef<any, any>((props, ref) => (
-  <MergedPlanes ref={ref} material={props.material} width={props.width} count={props.count} height={props.height} />
+  <MergedPlanes
+    ref={ref}
+    material={props.material}
+    width={props.width}
+    count={props.count}
+    height={props.height}
+  />
 ));
-PlaneNoise.displayName = 'PlaneNoise';
+PlaneNoise.displayName = "PlaneNoise";
 
-const DirLight = ({ position, color }: { position: [number, number, number]; color: string }) => {
+const DirLight = ({
+  position,
+  color,
+}: {
+  position: [number, number, number];
+  color: string;
+}) => {
   const dir = useRef<any>(null);
   useEffect(() => {
     if (!dir.current) return;
     const cam = dir.current.shadow.camera;
     if (!cam) return;
-    cam.top = 24; cam.bottom = -24; cam.left = -24; cam.right = 24; cam.far = 64;
+    cam.top = 24;
+    cam.bottom = -24;
+    cam.left = -24;
+    cam.right = 24;
+    cam.far = 64;
     dir.current.shadow.bias = -0.004;
   }, []);
-  return <directionalLight ref={dir} color={color} intensity={1} position={position} />;
+  return (
+    <directionalLight
+      ref={dir}
+      color={color}
+      intensity={1}
+      position={position}
+    />
+  );
 };
 
 export default function Beams({
   beamWidth = 3,
   beamHeight = 25,
   beamNumber = 10,
-  lightColor = '#ffffff',
+  lightColor = "#ffffff",
   speed = 1.5,
   noiseIntensity = 5,
   scale = 0.24,
@@ -217,19 +275,19 @@ export default function Beams({
     vec3 tangentZ = normalize(nextposZ - curpos);
     return normalize(cross(tangentZ, tangentX));
   }`,
-        fragmentHeader: '',
+        fragmentHeader: "",
         vertex: {
-          '#include <begin_vertex>': `transformed.z += getPos(transformed.xyz);`,
-          '#include <beginnormal_vertex>': `objectNormal = getNormal(position.xyz);`,
+          "#include <begin_vertex>": `transformed.z += getPos(transformed.xyz);`,
+          "#include <beginnormal_vertex>": `objectNormal = getNormal(position.xyz);`,
         },
         fragment: {
-          '#include <dithering_fragment>': `
+          "#include <dithering_fragment>": `
     float randomNoise = noise(gl_FragCoord.xy);
     gl_FragColor.rgb -= randomNoise / 15. * uNoiseIntensity;`,
         },
         material: { fog: true },
         uniforms: {
-          diffuse: new THREE.Color(...hexToNormalizedRGB('#000000')),
+          diffuse: new THREE.Color(...hexToNormalizedRGB("#000000")),
           time: { shared: true, mixed: true, linked: true, value: 0 },
           roughness: 0.3,
           metalness: 0.3,
@@ -239,18 +297,36 @@ export default function Beams({
           uScale: scale,
         },
       }),
-    [speed, noiseIntensity, scale]
+    [speed, noiseIntensity, scale],
   );
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
-      <Canvas dpr={[1, 2]} frameloop="always" style={{ width: '100%', height: '100%' }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "absolute",
+        top: 0,
+        left: 0,
+      }}
+    >
+      <Canvas
+        dpr={[1, 2]}
+        frameloop="always"
+        style={{ width: "100%", height: "100%" }}
+      >
         <group rotation={[0, 0, degToRad(rotation)]}>
-          <PlaneNoise ref={meshRef} material={beamMaterial} count={beamNumber} width={beamWidth} height={beamHeight} />
+          <PlaneNoise
+            ref={meshRef}
+            material={beamMaterial}
+            count={beamNumber}
+            width={beamWidth}
+            height={beamHeight}
+          />
           <DirLight color={lightColor} position={[0, 3, 10]} />
         </group>
         <ambientLight intensity={1} />
-        <color attach="background" args={['#000000']} />
+        <color attach="background" args={["#000000"]} />
         <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={30} />
       </Canvas>
     </div>
