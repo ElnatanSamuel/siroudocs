@@ -30,7 +30,7 @@ export const Search: React.FC = () => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-muted/50 text-muted-foreground text-sm w-52 hover:bg-muted/80 transition-colors"
+        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border bg-muted/50 text-muted-foreground text-sm w-52 hover:bg-muted/80 transition-colors"
       >
         <SearchIcon className="h-3.5 w-3.5 shrink-0" />
         <span className="text-xs">Search docs...</span>
@@ -45,7 +45,7 @@ export const Search: React.FC = () => {
         label="Global Search"
         className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] p-4 bg-background/40 backdrop-blur-sm"
       >
-        <div className="w-full max-w-[640px] bg-card rounded-xl border shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="w-full max-w-[640px] bg-card rounded-[8px] border shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
           <div className="flex items-center border-b px-4 py-3">
             <SearchIcon className="mr-3 h-4 w-4 shrink-0 opacity-50" />
             <Command.Input
@@ -71,7 +71,7 @@ export const Search: React.FC = () => {
                     key={item.href}
                     value={item.href}
                     onSelect={() => onSelect(item.href)}
-                    className="relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-sm text-foreground outline-none aria-selected:bg-accent/10 aria-selected:text-foreground transition-colors"
+                    className="relative flex cursor-pointer select-none items-center rounded-[6px] px-3 py-2 text-sm text-foreground outline-none aria-selected:bg-accent/10 aria-selected:text-foreground transition-colors"
                   >
                     <FileText className="mr-2.5 h-4 w-4 opacity-50 text-foreground" />
                     <span className="flex-1 text-foreground">{item.title}</span>

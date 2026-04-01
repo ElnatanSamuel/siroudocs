@@ -92,11 +92,18 @@ const LandingPage: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-8 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-1">
-            <img
-              src="/image/sirouwhite.png"
-              alt="sirou"
-              className="h-6 w-6 block "
-            />
+            <div className="h-6 flex items-center">
+              <img
+                src="/image/sirouwhite.png"
+                alt="sirou"
+                className="h-6 w-auto hidden dark:block"
+              />
+              <img
+                src="/image/siroublack.png"
+                alt="sirou"
+                className="h-6 w-auto block dark:hidden"
+              />
+            </div>
             <span className="text-xs font-bold ">SIROU</span>
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">

@@ -56,72 +56,73 @@ const TableOfContents: React.FC = () => {
     setActiveIds([]);
   }, [location.pathname]);
 
+  const visibleIdsRef = React.useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (headings.length === 0) return;
 
-    const headingElements = headings
-      .map(({ id }) => document.getElementById(id))
-      .filter(Boolean) as HTMLElement[];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            visibleIdsRef.current.add(entry.target.id);
+          } else {
+            visibleIdsRef.current.delete(entry.target.id);
+          }
+        });
 
-    let frameId = 0;
+        const nextIds = headings
+          .filter((h) => visibleIdsRef.current.has(h.id))
+          .map((h) => h.id);
 
-    const setIfChanged = (nextIds: string[]) => {
-      setActiveIds((prev) => (areSameIds(prev, nextIds) ? prev : nextIds));
-    };
+        if (nextIds.length > 0) {
+          setActiveIds((prev) => (areSameIds(prev, nextIds) ? prev : nextIds));
+        }
+      },
+      {
+        // Highlight when they are in the upper half of the screen
+        rootMargin: "-10% 0% -45% 0%",
+        threshold: 0,
+      },
+    );
 
-    const updateActive = () => {
-      const vh = window.innerHeight;
-      const topThreshold = vh * 0.2; // 20% from top
-      const bottomThreshold = vh * 0.6; // 70% from top
+    headings.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
 
-      const visible = headingElements
-        .filter((el) => {
-          const rect = el.getBoundingClientRect();
-          // Is the heading within the middle-ish region of the screen?
-          return rect.top >= topThreshold && rect.top <= bottomThreshold;
-        })
-        .map((el) => el.id);
+    // Handle bottom of page fallback
+    const scrollContainer = document.querySelector("main.flex-1");
+    const handleScroll = () => {
+      if (!scrollContainer) return;
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
 
-      if (visible.length > 0) {
-        setIfChanged(visible);
-      } else {
-        // Fallback: finding the latest heading above the top threshold
-        const positions = headingElements.map((el) => ({
-          id: el.id,
-          top: el.getBoundingClientRect().top,
-        }));
-
-        const latestAbove = positions
-          .filter((p) => p.top < topThreshold)
-          .sort((a, b) => b.top - a.top)[0];
-
-        setIfChanged(latestAbove ? [latestAbove.id] : []);
+      // If we're at the very bottom, highlight the last item
+      if (Math.ceil(scrollTop + clientHeight) >= scrollHeight - 20) {
+        const lastId = headings[headings.length - 1].id;
+        setActiveIds([lastId]);
       }
     };
 
-    const onScroll = () => {
-      if (frameId) return;
-      frameId = window.requestAnimationFrame(() => {
-        updateActive();
-        frameId = 0;
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", handleScroll, {
+        passive: true,
       });
-    };
-
-    updateActive();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    }
 
     return () => {
-      if (frameId) window.cancelAnimationFrame(frameId);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      observer.disconnect();
+      visibleIdsRef.current.clear();
+      if (scrollContainer) {
+        scrollContainer.removeEventListener("scroll", handleScroll);
+      }
     };
   }, [headings]);
 
   if (headings.length === 0) return null;
 
   return (
-    <nav className="hidden xl:block sticky top-24 w-52 shrink-0 self-start">
+    <nav className="hidden xl:block sticky top-0 w-52 shrink-0 h-full overflow-y-auto px-4 border-l">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
         On this page
       </p>

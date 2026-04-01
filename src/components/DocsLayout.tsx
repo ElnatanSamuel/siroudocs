@@ -54,7 +54,7 @@ const DocsLayout: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background">
       <header
         className="sticky top-0 z-50 h-14 bg-background/80 backdrop-blur-xl"
         style={{ borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
@@ -74,12 +74,12 @@ const DocsLayout: React.FC = () => {
                 <img
                   src="/image/sirouwhite.png"
                   alt="sirou"
-                  className="h-6 hidden dark:block"
+                  className="h-6 w-auto hidden dark:block"
                 />
                 <img
                   src="/image/siroublack.png"
                   alt="sirou"
-                  className="h-6 block dark:hidden"
+                  className="h-6 w-auto block dark:hidden"
                 />
               </div>
             </Link>
@@ -103,13 +103,13 @@ const DocsLayout: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex-1 flex overflow-hidden">
         <DocSidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 min-w-0">
-          <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
+        <main className="flex-1 h-full overflow-y-auto min-w-0">
+          <div className="flex w-full min-h-full">
             <div className="flex-1 py-4 px-4 sm:px-8 lg:pl-10 lg:pr-10">
               <div className="w-full max-w-6xl">
                 <Breadcrumbs />
@@ -117,7 +117,7 @@ const DocsLayout: React.FC = () => {
                 <DocsPrevNext />
               </div>
             </div>
-            <div className="hidden xl:block w-64 pr-8 py-10 shrink-0">
+            <div className="hidden xl:block w-64 pr-8 py-10 shrink-0 h-full overflow-y-auto sticky top-0">
               <TableOfContents key={location.pathname} />
             </div>
           </div>
