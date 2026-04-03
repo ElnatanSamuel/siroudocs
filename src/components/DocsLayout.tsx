@@ -48,9 +48,12 @@ const Breadcrumbs: React.FC = () => {
 const DocsLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const mainRef = React.useRef<HTMLDivElement>(null);
+  const tocRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (mainRef.current) mainRef.current.scrollTo(0, 0);
+    if (tocRef.current) tocRef.current.scrollTo(0, 0);
   }, [location.pathname]);
 
   return (
@@ -108,7 +111,7 @@ const DocsLayout: React.FC = () => {
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 h-full overflow-y-auto min-w-0">
+        <main ref={mainRef} className="flex-1 h-full overflow-y-auto min-w-0">
           <div className="flex w-full min-h-full">
             <div className="flex-1 py-4 px-4 sm:px-8 lg:pl-10 lg:pr-10">
               <div className="w-full max-w-6xl">
@@ -117,7 +120,10 @@ const DocsLayout: React.FC = () => {
                 <DocsPrevNext />
               </div>
             </div>
-            <div className="hidden xl:block w-64 pr-8 py-10 shrink-0 h-full overflow-y-auto sticky top-0">
+            <div
+              ref={tocRef}
+              className="hidden xl:block w-64 pr-8 py-10 shrink-0 h-[calc(100vh-3.5rem)] overflow-y-auto sticky top-14 border-l"
+            >
               <TableOfContents key={location.pathname} />
             </div>
           </div>

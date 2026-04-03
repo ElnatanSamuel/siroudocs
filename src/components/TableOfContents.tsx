@@ -122,7 +122,7 @@ const TableOfContents: React.FC = () => {
   if (headings.length === 0) return null;
 
   return (
-    <nav className="hidden xl:block sticky top-0 w-52 shrink-0 h-full overflow-y-auto px-4 border-l">
+    <nav className="w-52 shrink-0 px-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
         On this page
       </p>

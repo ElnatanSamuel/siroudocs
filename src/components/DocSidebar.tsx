@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   ChevronRight,
   BookOpen,
@@ -91,6 +91,15 @@ const DocSidebar: React.FC<DocSidebarProps> = ({ isOpen, onToggle }) => {
     setExpandedGroup((prev) => (prev === label ? null : label));
   };
 
+  const sidebarRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
+
   return (
     <>
       {isOpen && (
@@ -100,6 +109,7 @@ const DocSidebar: React.FC<DocSidebarProps> = ({ isOpen, onToggle }) => {
         />
       )}
       <aside
+        ref={sidebarRef}
         className={cn(
           "fixed top-14 left-0 z-40 h-[calc(100vh-3.5rem)] w-60 bg-sidebar overflow-y-auto transition-transform duration-200 lg:relative lg:top-0 lg:h-full lg:translate-x-0 lg:shrink-0",
           isOpen ? "translate-x-0" : "-translate-x-full",

@@ -1,0 +1,39 @@
+{
+  "sidebar": [
+    {
+      "title": "Getting Started",
+      "items": [
+        { "label": "Introduction", "path": "/docs" },
+        {
+          "label": "Installation",
+          "path": "/docs/getting-started/installation"
+        },
+        { "label": "Quick Start", "path": "/docs/getting-started/quick-start" }
+      ]
+    },
+    {
+      "title": "Guides",
+      "items": [
+        { "label": "Route Guards", "path": "/docs/guides/route-guards" },
+        { "label": "Data Loaders", "path": "/docs/guides/data-loaders" },
+        { "label": "Deep Links", "path": "/docs/guides/deep-links" }
+      ]
+    },
+    {
+      "title": "Adapters",
+      "items": [
+        { "label": "React", "path": "/docs/adapters/react" },
+        { "label": "Next.js", "path": "/docs/adapters/nextjs" },
+        { "label": "SvelteKit", "path": "/docs/adapters/svelte" },
+        { "label": "React Native", "path": "/docs/adapters/react-native" }
+      ]
+    },
+    {
+      "title": "API Reference",
+      "items": [
+        { "label": "Core API", "path": "/docs/api/core" },
+        { "label": "Type Reference", "path": "/docs/api/types" }
+      ]
+    }
+  ]
+}
